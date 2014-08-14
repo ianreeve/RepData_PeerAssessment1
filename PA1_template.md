@@ -6,7 +6,8 @@ This assignment makes use of data from a personal activity monitoring device. Th
 The following report describes a number of aspects of that data
 
 ## Loading and preprocessing the data
-```{r}
+
+```r
 library(ggplot2)
 library(lattice)
 options(digits=1,scipen=999)
@@ -20,45 +21,56 @@ The data has been loaded and a day-of-week field added
 
 This histogram shows the distribution of daily totals for the number of steps taken. It should be read for instance, on *y* days in the period between, say, 8000 and 9999 steps were taken. Days with missing data have been omitted. 
 
-```{r}
+
+```r
 t <- tapply(df$steps,df$date,sum)
 t <- as.data.frame(t)
 names(t)[1] <- "steps"
 par(cex=0.5)
 hist(t$steps,breaks=seq(0,22000,l=12),col="lightblue",main="Histogram of Daily Step Totals",xlab="Total Steps per Day",ylab="Number of Days",xaxt="n")
 axis(side=1,at=seq(0,22000,2000))
+```
+
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
+
+```r
 mean_steps <- mean(t$steps,na.rm=T)
 median_steps <- median(t$steps,na.rm=T)
 ```
 
-The mean total number of steps taken per day was `r mean_steps` and the median daily total was `r median_steps`
+The mean total number of steps taken per day was 10766.2 and the median daily total was 10765
 
 
 ## What is the average daily activity pattern?
 
 The chart beneath shows how activity fluctuates during the day. The average number of steps in each 5-minute interval across all the days in the data (again omitting missing data) is plotted.
 
-```{r}
+
+```r
 a <- aggregate(steps~interval,df,mean)
 peak_int <- a$interval[which.max(a$steps)]
 par(cex=1)
 with(a,plot(interval,steps,type="l",main="Average Steps Taken Throughout Day",xlab="5-minute interval from...",ylab="Avg Steps Taken in Interval"))
 ```
 
-This shows the peak interval with the most activity was the 5 minutes from `r peak_int`.
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
+
+This shows the peak interval with the most activity was the 5 minutes from 835.
 
 ## Imputing missing values
 
-```{r}
+
+```r
 no_miss_vals <- sum(is.na(df))
 ```
 
-In total, `r no_miss_vals` intervals have missing data.
+In total, 2304 intervals have missing data.
 
 Because of the potential bias introduced into calculations and summaries by this missing data, a method of estimating their values has been devised.
 Essentially, where an interval has missing data, the mean of that interval across all the days with data is used. However to account for some possible regular variation in the days of the week, this interval mean is then up- or down-weighted using a day-of-week index.
 
-```{r}
+
+```r
 t$day <- weekdays(as.Date(rownames(t),"%Y-%m-%d"))
 a1 <- aggregate(steps~day,t,mean)
 a1$wkdidx <- 7*a1$steps/sum(a1$steps)
@@ -74,7 +86,8 @@ The code chunk above has applied the imputation algorithm with the result that t
 
 The earlier histogram is then re-plotted beneath including the estimated data.
 
-```{r}
+
+```r
 t2 <- tapply(df$steps.est,df$date,sum)
 mean_steps_rev <- mean(t2,na.rm=T)
 median_steps_rev <- median(t2,na.rm=T)
@@ -83,13 +96,16 @@ hist(t2,breaks=seq(0,22000,l=12),col="green",main="Histogram of Daily Step Total
 axis(side=1,at=seq(0,22000,2000))
 ```
 
-There have been some revisions to the mean and median daily totals. The new mean is now `r mean_steps_rev` (a change of `r mean_steps_rev - mean_steps`) and the new median is `r median_steps_rev`, revised by `r median_steps_rev - median_steps`.
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
+
+There have been some revisions to the mean and median daily totals. The new mean is now 10806.4 (a change of 40.2) and the new median is 11015, revised by 250.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 A new factor variable is introduced into the dataset, identifying whether the day in question is a weekday (Mon-Fri) or a weekend day (Sat & Sun).
 
-```{r}
+
+```r
 df$wk <- ifelse(df$day=="Saturday"|df$day=="Sunday","Weekend","Weekday")
 b <- aggregate(steps.est~interval+wk,df,mean)
 b <- transform(b,wk=factor(wk))
@@ -97,7 +113,10 @@ b <- transform(b,wk=factor(wk))
 
 Two different plots of intra-day activity can be made to contrast weekdays and weekends
 
-```{r}
+
+```r
 p <- xyplot(steps.est~interval|wk,b,layout=c(1,2),type="l",main="Weekend-Weekday Comparison",xlab="5-minute interval from...",ylab="Avg Steps Taken in Interval")
 print(p)
 ```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8.png) 
